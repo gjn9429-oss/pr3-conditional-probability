@@ -1,5 +1,3 @@
-"""Практична робота № 5–6. Варіант 1. Римаренко Євгеній, ІВ-25-1."""
-
 import random
 from pathlib import Path
 
