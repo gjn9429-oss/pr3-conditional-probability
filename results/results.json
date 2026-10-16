@@ -4,9 +4,9 @@
   "work": "5–6",
   "variant": 1,
   "seed": 20261014,
-  "python": "3.14.7",
+  "python": "3.12.14",
   "generator": "random.Random, Mersenne Twister",
-  "executed_by": "ChatGPT у середовищі виконання",
+  "executed_at_utc": "2026-10-16T00:00:33+00:00",
   "sampling": "Блоки 1 і 3: накопичувальні підвибірки одного експерименту; окреме зерно для кожного блоку",
   "block1": [
     {
