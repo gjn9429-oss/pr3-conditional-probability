@@ -1,6 +1,7 @@
 """Практична робота № 5–6. Варіант 1. Римаренко Євгеній, ІВ-25-1."""
 
 import csv
+from datetime import datetime, timezone
 import json
 import platform
 import random
@@ -239,6 +240,7 @@ def main():
     output = {"student": "Римаренко Євгеній Олександрович", "group": "ІВ-25-1",
               "work": "5–6", "variant": 1, "seed": SEED, "python": platform.python_version(),
               "generator": "random.Random, Mersenne Twister",
+              "executed_at_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
               "sampling": "Блоки 1 і 3: накопичувальні підвибірки одного експерименту; окреме зерно для кожного блоку",
               "block1": first, "block2": second, "block2_checks": second_checks,
               "block3": third, "block4": fourth, "block4_summary": fourth_summary}
