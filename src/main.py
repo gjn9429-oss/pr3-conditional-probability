@@ -1,9 +1,5 @@
 """Практична робота № 5–6. Варіант 1. Римаренко Євгеній, ІВ-25-1."""
 
-import csv
-from datetime import datetime, timezone
-import json
-import platform
 import random
 from pathlib import Path
 
@@ -15,7 +11,7 @@ import matplotlib.pyplot as plt
 
 SEED = 20261014
 SAMPLE_SIZES = [100, 1000, 10000, 100000, 1000000]
-RESULTS = Path(__file__).resolve().parent / "results"
+GRAPHICS = Path(__file__).resolve().parent.parent / "graphics"
 
 
 def ratio(numerator, denominator):
@@ -24,12 +20,6 @@ def ratio(numerator, denominator):
         return None
     return numerator / denominator
 
-
-def save_csv(name, rows):
-    with (RESULTS / name).open("w", newline="", encoding="utf-8-sig") as file:
-        writer = csv.DictWriter(file, fieldnames=list(rows[0]))
-        writer.writeheader()
-        writer.writerows(rows)
 
 
 def block1():
@@ -68,7 +58,6 @@ def block1():
             }
             rows.append(row)
 
-    save_csv("block1.csv", rows)
     return rows
 
 
@@ -112,7 +101,6 @@ def block2():
         "node_availability_theory": 1 - p_ab,
         "node_availability_estimate": 1 - estimates[2],
     }
-    save_csv("block2.csv", rows)
     return rows, checks
 
 
@@ -140,7 +128,6 @@ def block3():
                          "failures": number - successes, "theory": exact,
                          "estimate": estimate, "abs_error": abs(estimate - exact)})
 
-    save_csv("block3.csv", rows)
     return rows
 
 
@@ -150,18 +137,11 @@ def block4():
     total = 100000
     successes = 0
     failures = [0, 0, 0]
-    component_failures = [0, 0, 0]
 
     for _ in range(total):
         service1 = generator.random() < 0.99
         service2 = generator.random() < 0.98
         service3 = generator.random() < 0.95
-        states = [service1, service2, service3]
-        # Додаткова діагностика станів: ці події можуть перетинатися.
-        for index in range(3):
-            if not states[index]:
-                component_failures[index] += 1
-
         # Кожному невдалому запиту приписуємо тільки першу причину.
         if not service1:
             failures[0] += 1
@@ -180,14 +160,11 @@ def block4():
         rows.append({"service": f"S{index + 1}", "first_failure_count": failures[index],
                      "theory_cause": exact_causes[index], "fraction_all_requests": estimate,
                      "fraction_failed_requests": ratio(failures[index], failed_total),
-                     "abs_error": abs(estimate - exact_causes[index]),
-                     "component_failure_count": component_failures[index]})
+                     "abs_error": abs(estimate - exact_causes[index])})
 
     summary = {"N": total, "successes": successes, "failures": failed_total,
                "theory": 0.99 * 0.98 * 0.95, "estimate": successes / total,
                "abs_error": abs(successes / total - 0.99 * 0.98 * 0.95)}
-    save_csv("block4.csv", rows)
-    save_csv("block4_summary.csv", [summary])
     return rows, summary
 
 
@@ -207,12 +184,12 @@ def convergence_plot(rows, estimate_key, error_key, exact, ylabel, filename):
         axis.set_xlabel("Кількість випробувань N")
         axis.grid(True, alpha=0.3)
     figure.tight_layout()
-    figure.savefig(RESULTS / filename, dpi=300)
+    figure.savefig(GRAPHICS / filename, dpi=300)
     plt.close(figure)
 
 
 def main():
-    RESULTS.mkdir(exist_ok=True)
+    GRAPHICS.mkdir(exist_ok=True)
     first = block1()
     second, second_checks = block2()
     third = block3()
@@ -234,17 +211,8 @@ def main():
     axis.legend()
     axis.grid(axis="y", alpha=0.3)
     figure.tight_layout()
-    figure.savefig(RESULTS / "block4_failures.png", dpi=300)
+    figure.savefig(GRAPHICS / "block4_failures.png", dpi=300)
     plt.close(figure)
-
-    output = {"student": "Римаренко Євгеній Олександрович", "group": "ІВ-25-1",
-              "work": "5–6", "variant": 1, "seed": SEED, "python": platform.python_version(),
-              "generator": "random.Random, Mersenne Twister",
-              "executed_at_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-              "sampling": "Блоки 1 і 3: накопичувальні підвибірки одного експерименту; окреме зерно для кожного блоку",
-              "block1": first, "block2": second, "block2_checks": second_checks,
-              "block3": third, "block4": fourth, "block4_summary": fourth_summary}
-    (RESULTS / "results.json").write_text(json.dumps(output, ensure_ascii=False, indent=2), encoding="utf-8")
 
     lines = ["Практична робота № 5–6, варіант 1", f"Зерно генератора: {SEED}",
              "Блок 1: N; W(A); W(B); W(A∩B); W(A|B); W(B|A); абсолютна похибка"]
@@ -257,14 +225,16 @@ def main():
     lines.append("Блок 3: N; теорія; частота; абсолютна похибка")
     for row in third:
         lines.append(f"{row['N']}; {row['theory']:.7f}; {row['estimate']:.7f}; {row['abs_error']:.7f}")
-    lines.append("Блок 4: " + json.dumps(fourth_summary, ensure_ascii=False))
+    lines.append(f"Блок 4: успішних запитів {fourth_summary['successes']}; "
+                 f"відмов {fourth_summary['failures']}; "
+                 f"доступність {fourth_summary['estimate']:.6f}; "
+                 f"похибка {fourth_summary['abs_error']:.6f}")
     for row in fourth:
         lines.append(f"{row['service']}: перших відмов {row['first_failure_count']}; "
                      f"частка всіх запитів {row['fraction_all_requests']:.6f}; "
                      f"частка невдалих {row['fraction_failed_requests']:.6f}")
-    lines.append(f"Результати збережено в: {RESULTS}")
+    lines.append(f"Графіки збережено в: {GRAPHICS}")
     console = "\n".join(lines)
-    (RESULTS / "console.txt").write_text(console + "\n", encoding="utf-8")
     print(console)
 
 
